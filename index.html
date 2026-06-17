@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Axo Trust and Safety Operations</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --ink: #152238;
+      --muted: #64748b;
+      --line: #dbe1ea;
+      --brand: #0f5bff;
+      --brand-dark: #0a3fb4;
+      --good: #12805c;
+      --warn: #b45309;
+      --danger: #c2410c;
+      --panel: #ffffff;
+      --side: #ffffff;
+      --side-soft: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Segoe UI, Arial, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+    }
+    button, input, textarea, select {
+      font: inherit;
+    }
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      background: var(--brand);
+      color: white;
+      transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+    button:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(15, 91, 255, .18); }
+    button.secondary { background: #e8eef7; color: #172033; }
+    button.danger { background: var(--danger); }
+    button.ghost { background: transparent; color: inherit; border: 1px solid var(--line); }
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 11px 12px;
+      background: #fff;
+      color: var(--ink);
+    }
+    textarea { min-height: 90px; resize: vertical; }
+    .hidden { display: none !important; }
+    .login {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        linear-gradient(135deg, rgba(15,91,255,.12), rgba(18,128,92,.10)),
+        var(--bg);
+    }
+    .login-box {
+      width: min(430px, 100%);
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 28px;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, .12);
+      animation: riseIn .35s ease both;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .mark {
+      width: 42px;
+      height: 42px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 900;
+      background: linear-gradient(135deg, var(--brand), #16a34a);
+      box-shadow: 0 10px 24px rgba(15, 91, 255, .24);
+    }
+    h1, h2, h3, p { margin-top: 0; }
+    .sub { color: var(--muted); line-height: 1.5; }
+    .field { margin: 14px 0; }
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      color: #334155;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 310px 1fr;
+      background:
+        linear-gradient(120deg, rgba(15,91,255,.06), transparent 32%),
+        linear-gradient(270deg, rgba(18,128,92,.05), transparent 34%),
+        #f7f9fc;
+    }
+    .sidebar {
+      background: var(--side);
+      color: var(--ink);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      border-right: 1px solid var(--line);
+      box-shadow: 12px 0 32px rgba(15, 23, 42, .05);
+    }
+    .sidebar .logo strong { color: #0f172a; }
+    .side-title {
+      font-size: 13px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: #64748b;
+      margin: 14px 0 8px;
+    }
+    .case-list {
+      display: grid;
+      gap: 8px;
+      overflow: auto;
+    }
+    .case-item {
+      border: 1px solid var(--line);
+      background: var(--side-soft);
+      color: var(--ink);
+      text-align: left;
+      padding: 12px;
+      border-radius: 7px;
+      box-shadow: none;
+    }
+    .case-item:hover { transform: translateY(-1px); box-shadow: 0 10px 20px rgba(15,23,42,.08); }
+    .case-item.active {
+      outline: 2px solid #60a5fa;
+      background: #eff6ff;
+      border-color: #bfdbfe;
+    }
+    .case-item small { display: block; color: #64748b; margin-top: 4px; }
+    .main {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      min-width: 0;
+    }
+    .topbar {
+      min-height: 86px;
+      padding: 18px 26px;
+      background: rgba(255,255,255,.92);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      backdrop-filter: blur(14px);
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border: 1px solid var(--line);
+      background: #f8fafc;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 13px;
+      color: #334155;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--good);
+    }
+    .workspace {
+      padding: 24px;
+      overflow: auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+      align-items: start;
+    }
+    .panel {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      animation: riseIn .28s ease both;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+    .stat {
+      background: rgba(255,255,255,.9);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      box-shadow: 0 12px 28px rgba(15, 23, 42, .05);
+    }
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .stat strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 26px;
+      color: #0f172a;
+    }
+    .console-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #ecfdf5;
+      color: #047857;
+      border: 1px solid #bbf7d0;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .case-control-panel {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(180px, 1fr));
+      gap: 12px;
+      align-items: end;
+      padding: 16px;
+    }
+    .case-control-panel h3,
+    .case-control-panel .case-meta,
+    .case-control-panel .actions,
+    .case-control-panel #caseUrlText {
+      grid-column: 1 / -1;
+    }
+    .case-control-panel .field {
+      margin: 0;
+    }
+    .case-control-panel textarea {
+      min-height: 46px;
+    }
+    .case-meta {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 12px 0;
+    }
+    .meta {
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px;
+    }
+    .meta span { display: block; color: var(--muted); font-size: 12px; }
+    .meta strong { display: block; margin-top: 4px; word-break: break-word; }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .chat-shell {
+      height: calc(100vh - 330px);
+      min-height: 520px;
+      display: grid;
+      grid-template-rows: auto 1fr auto auto;
+      overflow: hidden;
+      padding: 0;
+    }
+    .chat-head {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      background: linear-gradient(90deg, #ffffff, #f0f6ff);
+    }
+    .messages {
+      padding: 18px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #f8fafc;
+    }
+    .msg {
+      max-width: min(680px, 86%);
+      padding: 13px 15px;
+      border-radius: 8px;
+      background: white;
+      border: 1px solid var(--line);
+      color: #0f172a;
+      line-height: 1.55;
+      font-size: 15.5px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      animation: messageIn .2s ease both;
+    }
+    .msg.admin {
+      align-self: flex-end;
+      background: #ffffff;
+      border-color: #8bb8ff;
+      border-right: 4px solid var(--brand);
+      box-shadow: 0 8px 20px rgba(15, 23, 42, .08);
+    }
+    .msg.user {
+      align-self: flex-start;
+      background: white;
+    }
+    .msg.system {
+      align-self: center;
+      max-width: 92%;
+      background: #fff7ed;
+      color: #7c2d12;
+      border-color: #fed7aa;
+      font-size: 13px;
+      text-align: center;
+    }
+    .msg .from {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 5px;
+      font-weight: 800;
+    }
+    .msg.admin .from {
+      color: #1e293b;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .msg img {
+      max-width: 260px;
+      display: block;
+      border-radius: 6px;
+      margin-top: 8px;
+    }
+    .composer {
+      padding: 13px;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      border-top: 1px solid var(--line);
+      background: white;
+    }
+    .typing {
+      min-height: 34px;
+      padding: 7px 18px;
+      color: var(--brand-dark);
+      background: #f8fafc;
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .typing .bounce {
+      display: inline-flex;
+      gap: 3px;
+    }
+    .typing .bounce span {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--brand);
+      animation: dotPulse .9s infinite ease-in-out;
+    }
+    .typing .bounce span:nth-child(2) { animation-delay: .15s; }
+    .typing .bounce span:nth-child(3) { animation-delay: .3s; }
+    .rank {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #eaf2ff;
+      color: #0a3fb4;
+      border: 1px solid #bfdbfe;
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: none;
+      letter-spacing: 0;
+      margin-bottom: 6px;
+    }
+    .join {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    #userChatView {
+      padding: 0 !important;
+      place-items: stretch;
+      background: #f7f9fc;
+    }
+    #userChatMount {
+      width: 100% !important;
+      min-height: 100vh;
+    }
+    #userChatMount .chat-shell {
+      height: 100vh;
+      min-height: 100vh;
+      border-radius: 0;
+      border: 0;
+    }
+    #adminChatMount .chat-shell {
+      height: calc(100vh - 350px);
+      min-height: 560px;
+    }
+    .notice {
+      padding: 14px;
+      border-radius: 7px;
+      border: 1px solid #bfdbfe;
+      background: #eff6ff;
+      color: #1e3a8a;
+      margin: 12px 0;
+    }
+    .empty {
+      padding: 44px 20px;
+      text-align: center;
+      color: var(--muted);
+    }
+    @keyframes riseIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes messageIn {
+      from { opacity: 0; transform: translateY(6px) scale(.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes dotPulse {
+      0%, 80%, 100% { transform: translateY(0); opacity: .35; }
+      40% { transform: translateY(-4px); opacity: 1; }
+    }
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .grid { grid-template-columns: 1fr; }
+      .chat-shell { height: 680px; }
+      .case-meta { grid-template-columns: 1fr; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .dashboard { grid-template-columns: repeat(2, 1fr); }
+      .case-control-panel { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <section id="loginView" class="login hidden">
+    <div class="login-box">
+      <div class="logo">
+        <div class="mark">AX</div>
+        <div>
+          <h1>Axo Trust and Safety Operations</h1>
+          <p class="sub">Administrator console</p>
+        </div>
+      </div>
+      <form id="loginForm">
+        <div class="field">
+          <label>Email</label>
+          <input id="loginEmail" type="email" autocomplete="username" required />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input id="loginPass" type="password" autocomplete="current-password" required />
+        </div>
+        <button type="submit">Sign in</button>
+        <p id="loginError" class="sub" style="color:#c2410c;margin-top:12px;"></p>
+      </form>
+    </div>
+  </section>
+
+  <section id="joinView" class="join hidden">
+    <div class="login-box">
+      <div class="logo">
+        <div class="mark">AX</div>
+        <div>
+          <h1>Axo Trust and Safety Operations</h1>
+          <p class="sub">Secure case meeting</p>
+        </div>
+      </div>
+      <form id="joinForm">
+        <div class="notice">Enter the Meeting ID shared by the admin and your respective case name.</div>
+        <div class="field">
+          <label>Meeting ID</label>
+          <input id="meetingId" required />
+        </div>
+        <div class="field">
+          <label>Name to be used in the case</label>
+          <input id="guestName" required />
+        </div>
+        <button type="submit">Connect to case</button>
+        <p id="joinError" class="sub" style="color:#c2410c;margin-top:12px;"></p>
+      </form>
+    </div>
+  </section>
+
+  <section id="connectingView" class="join hidden">
+    <div class="login-box" style="text-align:center;">
+      <div class="mark" style="margin:0 auto 16px;">AX</div>
+      <h1>Connecting you to The Case</h1>
+      <p class="sub">Please wait while the secure chat session opens.</p>
+    </div>
+  </section>
+
+  <section id="adminView" class="app hidden">
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="mark">AX</div>
+        <div>
+          <strong>Axo Trust and Safety Operations</strong>
+          <small style="display:block;color:#64748b;">Operations console</small>
+        </div>
+      </div>
+      <button id="createCaseBtn">Create Case</button>
+      <button id="logoutBtn" class="ghost">Logout</button>
+      <div>
+        <div class="side-title">Active Cases</div>
+        <div id="caseList" class="case-list"></div>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="adminTitle">Active Cases</h2>
+          <p class="sub" id="adminSubtitle">Command center for safety case support.</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <span class="console-badge">Axo Services</span>
+          <span class="pill"><span class="dot"></span> Axo Support Console</span>
+        </div>
+      </header>
+      <div class="workspace">
+        <div id="dashboard" class="dashboard">
+          <div class="stat"><span>Total Cases</span><strong id="statTotal">0</strong></div>
+          <div class="stat"><span>Open</span><strong id="statOpen">0</strong></div>
+          <div class="stat"><span>Ended</span><strong id="statEnded">0</strong></div>
+          <div class="stat"><span>Transferred</span><strong id="statTransferred">0</strong></div>
+        </div>
+        <div id="emptyAdmin" class="panel empty">No case selected.</div>
+        <div id="adminCase" class="grid hidden">
+          <section class="panel case-control-panel">
+            <h3>Case Details</h3>
+            <div class="case-meta">
+              <div class="meta"><span>Case ID</span><strong id="caseIdText"></strong></div>
+              <div class="meta"><span>Chat ID</span><strong id="chatIdText"></strong></div>
+              <div class="meta"><span>User ID</span><strong id="userIdText"></strong></div>
+            </div>
+            <div class="field"><label>User name</label><input id="adminUserName" /></div>
+            <div class="field"><label>Email address</label><input id="adminEmail" /></div>
+            <div class="field"><label>Description</label><textarea id="adminDesc"></textarea></div>
+            <div class="field"><label>Custom status</label><input id="customStatus" placeholder="Waiting, Reviewing, Resolved..." /></div>
+            <div class="actions">
+              <button id="saveStatusBtn">Change Status</button>
+              <button id="copyUrlBtn" class="secondary">Copy Case URL</button>
+              <button id="deleteCaseBtn" class="danger">Delete Case</button>
+            </div>
+            <div class="actions">
+              <button id="endChatBtn" class="danger">End chat</button>
+              <button id="transferChatBtn" class="secondary">Transfer chat</button>
+            </div>
+            <p class="sub" id="caseUrlText"></p>
+          </section>
+          <section id="adminChatMount"></section>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <section id="userChatView" class="join hidden">
+    <div id="userChatMount"></div>
+  </section>
+
+  <template id="chatTemplate">
+    <section class="panel chat-shell">
+      <div class="chat-head">
+        <div>
+          <h3 class="chatTitle">Case Chat</h3>
+          <p class="sub chatStatus"></p>
+        </div>
+        <span class="pill"><span class="dot"></span> Live support</span>
+      </div>
+      <div class="messages"></div>
+      <div class="typing hidden"></div>
+      <form class="composer">
+        <input class="messageInput" placeholder="Type a message..." />
+        <input class="imageInput hidden" type="file" accept="image/*" />
+        <button class="attachBtn secondary" type="button">Image</button>
+        <button type="submit">Send</button>
+      </form>
+    </section>
+  </template>
+
+  <script>
+    const ADMIN_EMAIL = "ashad.umar355@gmail.com";
+    const ADMIN_PASS = "Ashadumar@@786";
+    const storeKey = "axoCasesV3";
+    const sessionKey = "axoAdminSession";
+    const typingTimeouts = {};
+    const chatIntervals = {};
+    const params = new URLSearchParams(location.search);
+    const queryCaseId = params.get("case") || "";
+    const pathParts = location.pathname.split("/").filter(Boolean);
+    const lastPathPart = pathParts[pathParts.length - 1] || "";
+    const pathCaseId = (lastPathPart && lastPathPart.startsWith("CASE-"))
+      ? lastPathPart
+      : "";
+    const urlCaseId = queryCaseId || pathCaseId;
+    let selectedCaseId = null;
+    let currentRole = "user";
+    let guestName = "";
+
+    const $ = (id) => document.getElementById(id);
+    const uid = (prefix) => prefix + "-" + Math.random().toString(36).slice(2, 7).toUpperCase() + Date.now().toString(36).slice(-3).toUpperCase();
+    const now = () => new Date().toLocaleString();
+
+    function getCases() {
+      return JSON.parse(localStorage.getItem(storeKey) || "[]");
+    }
+    function saveCases(cases) {
+      localStorage.setItem(storeKey, JSON.stringify(cases));
+    }
+    function updateCase(caseId, updater) {
+      const cases = getCases();
+      const index = cases.findIndex(c => c.caseId === caseId);
+      if (index < 0) return null;
+      updater(cases[index]);
+      saveCases(cases);
+      return cases[index];
+    }
+    function addSystem(caseId, text) {
+      updateCase(caseId, c => c.messages.push({ id: uid("MSG"), type: "system", text, time: now() }));
+    }
+    function setTyping(caseId, role, name, active) {
+      updateCase(caseId, c => {
+        c.typing = c.typing || {};
+        c.typing[role] = active ? { name, at: Date.now() } : null;
+      });
+    }
+    function clearTypingSoon(caseId, role, name) {
+      const key = caseId + role;
+      clearTimeout(typingTimeouts[key]);
+      typingTimeouts[key] = setTimeout(() => setTyping(caseId, role, name, false), 1100);
+    }
+    function show(id) {
+      ["loginView", "joinView", "connectingView", "adminView", "userChatView"].forEach(v => $(v).classList.add("hidden"));
+      $(id).classList.remove("hidden");
+    }
+    function route() {
+      if (urlCaseId) {
+        show("joinView");
+        $("meetingId").value = "";
+      } else if (sessionStorage.getItem(sessionKey) === "yes") {
+        currentRole = "admin";
+        show("adminView");
+        renderAdmin();
+      } else {
+        show("loginView");
+      }
+    }
+    function renderAdmin() {
+      const cases = getCases();
+      $("statTotal").textContent = cases.length;
+      $("statEnded").textContent = cases.filter(c => (c.status || "").toLowerCase().includes("ended")).length;
+      $("statTransferred").textContent = cases.filter(c => (c.status || "").toLowerCase().includes("transferred")).length;
+      $("statOpen").textContent = cases.filter(c => !["ended", "transferred"].some(s => (c.status || "").toLowerCase().includes(s))).length;
+      $("caseList").innerHTML = "";
+      cases.forEach(c => {
+        const item = document.createElement("button");
+        item.className = "case-item" + (c.caseId === selectedCaseId ? " active" : "");
+        item.innerHTML = `<strong>${c.name || "Unnamed user"}</strong><small>${c.caseId} - ${c.status}</small>`;
+        item.onclick = () => {
+          selectedCaseId = c.caseId;
+          addSystem(c.caseId, "Axo Services Joined the Chat");
+          renderAdmin();
+        };
+        $("caseList").appendChild(item);
+      });
+      const c = cases.find(x => x.caseId === selectedCaseId) || cases[0];
+      if (!c) {
+        $("emptyAdmin").classList.remove("hidden");
+        $("adminCase").classList.add("hidden");
+        return;
+      }
+      selectedCaseId = c.caseId;
+      $("emptyAdmin").classList.add("hidden");
+      $("adminCase").classList.remove("hidden");
+      $("adminTitle").textContent = c.name + " case";
+      $("adminSubtitle").textContent = "Current status: " + c.status;
+      $("caseIdText").textContent = c.caseId;
+      $("chatIdText").textContent = c.chatId;
+      $("userIdText").textContent = c.userId;
+      $("adminUserName").value = c.name;
+      $("adminEmail").value = c.email;
+      $("adminDesc").value = c.description;
+      $("customStatus").value = c.status;
+      $("caseUrlText").textContent = caseUrl(c.caseId);
+      mountChat("adminChatMount", c.caseId, "admin");
+    }
+    function mountChat(mountId, caseId, role) {
+      clearInterval(chatIntervals[mountId]);
+      const mount = $(mountId);
+      const tpl = $("chatTemplate").content.cloneNode(true);
+      mount.innerHTML = "";
+      mount.appendChild(tpl);
+      const shell = mount.querySelector(".chat-shell");
+      const messages = mount.querySelector(".messages");
+      const typing = mount.querySelector(".typing");
+      const form = mount.querySelector(".composer");
+      const input = mount.querySelector(".messageInput");
+      const file = mount.querySelector(".imageInput");
+      const attach = mount.querySelector(".attachBtn");
+      const renderMessages = () => {
+        const c = getCases().find(x => x.caseId === caseId);
+        if (!c) {
+          messages.innerHTML = `<div class="msg system">This case is no longer available.</div>`;
+          return;
+        }
+        shell.querySelector(".chatTitle").textContent = "Case " + c.caseId;
+        shell.querySelector(".chatStatus").textContent = c.status + " - Chat ID " + c.chatId;
+        messages.innerHTML = "";
+        c.messages.forEach(m => {
+          const div = document.createElement("div");
+          div.className = "msg " + (m.type || "user");
+          if (m.type === "system") {
+            div.textContent = m.text;
+          } else {
+            const fromLine = m.type === "admin"
+              ? `<span class="rank">Axo Services</span><span class="from">${m.time}</span>`
+              : `<span class="from">${escapeHtml(m.from)} - ${m.time}</span>`;
+            div.innerHTML = fromLine + escapeHtml(m.text || "");
+            if (m.image) {
+              const img = document.createElement("img");
+              img.src = m.image;
+              div.appendChild(img);
+            }
+          }
+          messages.appendChild(div);
+        });
+        const otherRole = role === "admin" ? "user" : "admin";
+        const otherTyping = c.typing && c.typing[otherRole];
+        if (otherTyping && Date.now() - otherTyping.at < 3000) {
+          const label = otherRole === "admin" ? "Axo Services is typing" : (otherTyping.name || "User") + " is typing";
+          typing.innerHTML = `${escapeHtml(label)} <span class="bounce"><span></span><span></span><span></span></span>`;
+          typing.classList.remove("hidden");
+        } else {
+          typing.classList.add("hidden");
+          typing.innerHTML = "";
+        }
+        messages.scrollTop = messages.scrollHeight;
+      };
+      input.oninput = () => {
+        const name = role === "admin" ? "Axo Services" : guestName;
+        setTyping(caseId, role, name, input.value.trim().length > 0);
+        clearTypingSoon(caseId, role, name);
+      };
+      attach.onclick = () => file.click();
+      file.onchange = () => {
+        const picked = file.files[0];
+        if (!picked) return;
+        const reader = new FileReader();
+        reader.onload = () => {
+          updateCase(caseId, c => c.messages.push({
+            id: uid("MSG"),
+            type: role,
+            from: role === "admin" ? "Axo Services" : guestName,
+            text: input.value.trim(),
+            image: reader.result,
+            time: now()
+          }));
+          setTyping(caseId, role, role === "admin" ? "Axo Services" : guestName, false);
+          input.value = "";
+          file.value = "";
+          renderMessages();
+        };
+        reader.readAsDataURL(picked);
+      };
+      form.onsubmit = (e) => {
+        e.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        updateCase(caseId, c => c.messages.push({
+          id: uid("MSG"),
+          type: role,
+          from: role === "admin" ? "Axo Services" : guestName,
+          text,
+          time: now()
+        }));
+        setTyping(caseId, role, role === "admin" ? "Axo Services" : guestName, false);
+        input.value = "";
+        renderMessages();
+      };
+      renderMessages();
+      chatIntervals[mountId] = setInterval(renderMessages, 900);
+    }
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" }[ch]));
+    }
+    function caseUrl(caseId) {
+      if (location.protocol === "file:") {
+        return location.href.split("?")[0].replace(/#.*$/, "") + "?case=" + encodeURIComponent(caseId);
+      }
+      const baseParts = pathParts.slice(0, urlCaseId ? -1 : undefined).filter(p => !["index.html", "404.html"].includes(p));
+      return location.origin + "/" + (baseParts.length ? baseParts.join("/") + "/" : "") + caseId;
+    }
+
+    $("loginForm").onsubmit = (e) => {
+      e.preventDefault();
+      if ($("loginEmail").value.trim() === ADMIN_EMAIL && $("loginPass").value === ADMIN_PASS) {
+        sessionStorage.setItem(sessionKey, "yes");
+        currentRole = "admin";
+        show("adminView");
+        renderAdmin();
+      } else {
+        $("loginError").textContent = "Invalid admin login details.";
+      }
+    };
+    $("logoutBtn").onclick = () => {
+      if (selectedCaseId) addSystem(selectedCaseId, "Axo Services Left the chat");
+      sessionStorage.removeItem(sessionKey);
+      selectedCaseId = null;
+      show("loginView");
+    };
+    $("createCaseBtn").onclick = () => {
+      const name = prompt("Name of the user");
+      if (!name) return;
+      const email = prompt("Email address");
+      if (!email) return;
+      const description = prompt("Description");
+      const newCase = {
+        caseId: uid("CASE"),
+        chatId: uid("CHAT"),
+        userId: uid("USER"),
+        name,
+        email,
+        description: description || "",
+        status: "New case meeting created",
+        messages: [{ id: uid("MSG"), type: "system", text: "Case meeting created by Axo Services", time: now() }]
+      };
+      const cases = getCases();
+      cases.unshift(newCase);
+      saveCases(cases);
+      selectedCaseId = newCase.caseId;
+      renderAdmin();
+      alert("Case created. Case ID: " + newCase.caseId + "\\nChat ID: " + newCase.chatId + "\\nUser ID: " + newCase.userId);
+    };
+    $("saveStatusBtn").onclick = () => {
+      updateCase(selectedCaseId, c => {
+        c.name = $("adminUserName").value;
+        c.email = $("adminEmail").value;
+        c.description = $("adminDesc").value;
+        c.status = $("customStatus").value || "Updated";
+        c.messages.push({ id: uid("MSG"), type: "system", text: "Case status changed to: " + c.status, time: now() });
+      });
+      renderAdmin();
+    };
+    $("deleteCaseBtn").onclick = () => {
+      if (!selectedCaseId || !confirm("Delete this case?")) return;
+      saveCases(getCases().filter(c => c.caseId !== selectedCaseId));
+      selectedCaseId = null;
+      renderAdmin();
+    };
+    $("copyUrlBtn").onclick = async () => {
+      const url = caseUrl(selectedCaseId);
+      try { await navigator.clipboard.writeText(url); alert("Copied: " + url); }
+      catch { prompt("Copy case URL", url); }
+    };
+    $("endChatBtn").onclick = () => {
+      addSystem(selectedCaseId, "Axo Services Ended the chat");
+      updateCase(selectedCaseId, c => c.status = "Ended");
+      renderAdmin();
+    };
+    $("transferChatBtn").onclick = () => {
+      addSystem(selectedCaseId, "Transfering chat...........");
+      setTimeout(() => {
+        updateCase(selectedCaseId, c => {
+          c.messages = [{ id: uid("MSG"), type: "system", text: "Chat transferred.", time: now() }];
+          c.status = "Transferred";
+        });
+        renderAdmin();
+      }, 900);
+    };
+    $("joinForm").onsubmit = (e) => {
+      e.preventDefault();
+      const caseId = urlCaseId || $("meetingId").value.trim();
+      const meetingId = $("meetingId").value.trim();
+      const c = getCases().find(x => x.caseId === caseId);
+      if (!c || meetingId !== c.chatId) {
+        $("joinError").textContent = "Case or Meeting ID not found.";
+        return;
+      }
+      guestName = $("guestName").value.trim();
+      show("connectingView");
+      setTimeout(() => {
+        currentRole = "user";
+        addSystem(caseId, guestName + " Connected");
+        show("userChatView");
+        mountChat("userChatMount", caseId, "user");
+      }, 1200);
+      window.onbeforeunload = () => addSystem(caseId, guestName + " Disconnected");
+    };
+    window.addEventListener("storage", () => {
+      // Chat panels poll their case data, so storage events should not rebuild the UI.
+    });
+    route();
+  </script>
+</body>
+</html>
