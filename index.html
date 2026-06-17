@@ -363,6 +363,14 @@
       gap: 8px;
       border-top: 1px solid var(--line);
       background: white;
+      align-items: end;
+    }
+    .composer textarea {
+      min-height: 46px;
+      max-height: 150px;
+      resize: none;
+      line-height: 1.45;
+      overflow-y: auto;
     }
     .typing {
       min-height: 34px;
@@ -604,7 +612,7 @@
       <div class="messages"></div>
       <div class="typing hidden"></div>
       <form class="composer">
-        <input class="messageInput" placeholder="Type a message..." />
+        <textarea class="messageInput" placeholder="Type a message..."></textarea>
         <input class="imageInput hidden" type="file" accept="image/*" />
         <button class="attachBtn secondary" type="button">Image</button>
         <button type="submit">Send</button>
@@ -619,6 +627,7 @@
     const sessionKey = "axoAdminSession";
     const typingTimeouts = {};
     const chatIntervals = {};
+    const chatStates = {};
     const params = new URLSearchParams(location.search);
     const queryCaseId = params.get("case") || "";
     const pathParts = location.pathname.split("/").filter(Boolean);
@@ -720,6 +729,7 @@
     }
     function mountChat(mountId, caseId, role) {
       clearInterval(chatIntervals[mountId]);
+      chatStates[mountId] = { messageSig: "", typingSig: "", headerSig: "" };
       const mount = $(mountId);
       const tpl = $("chatTemplate").content.cloneNode(true);
       mount.innerHTML = "";
@@ -734,46 +744,72 @@
       const renderMessages = () => {
         const c = getCases().find(x => x.caseId === caseId);
         if (!c) {
-          messages.innerHTML = `<div class="msg system">This case is no longer available.</div>`;
+          if (chatStates[mountId].messageSig !== "missing") {
+            messages.innerHTML = `<div class="msg system">This case is no longer available.</div>`;
+            chatStates[mountId].messageSig = "missing";
+          }
           return;
         }
-        shell.querySelector(".chatTitle").textContent = "Case " + c.caseId;
-        shell.querySelector(".chatStatus").textContent = c.status + " - Chat ID " + c.chatId;
-        messages.innerHTML = "";
-        c.messages.forEach(m => {
-          const div = document.createElement("div");
-          div.className = "msg " + (m.type || "user");
-          if (m.type === "system") {
-            div.textContent = m.text;
-          } else {
-            const fromLine = m.type === "admin"
-              ? `<span class="rank">Axo Services</span><span class="from">${m.time}</span>`
-              : `<span class="from">${escapeHtml(m.from)} - ${m.time}</span>`;
-            div.innerHTML = fromLine + escapeHtml(m.text || "");
-            if (m.image) {
-              const img = document.createElement("img");
-              img.src = m.image;
-              div.appendChild(img);
+        const headerSig = c.caseId + "|" + c.status + "|" + c.chatId;
+        if (chatStates[mountId].headerSig !== headerSig) {
+          shell.querySelector(".chatTitle").textContent = "Case " + c.caseId;
+          shell.querySelector(".chatStatus").textContent = c.status + " - Chat ID " + c.chatId;
+          chatStates[mountId].headerSig = headerSig;
+        }
+        const messageSig = (c.messages || []).map(m => [m.id, m.type, m.from, m.text, !!m.image, m.time].join("~")).join("|");
+        if (chatStates[mountId].messageSig !== messageSig) {
+          messages.innerHTML = "";
+          (c.messages || []).forEach(m => {
+            const div = document.createElement("div");
+            div.className = "msg " + (m.type || "user");
+            if (m.type === "system") {
+              div.textContent = m.text;
+            } else {
+              const fromLine = m.type === "admin"
+                ? `<span class="rank">Axo Services</span><span class="from">${m.time}</span>`
+                : `<span class="from">${escapeHtml(m.from || "User")} - ${m.time}</span>`;
+              div.innerHTML = fromLine + escapeHtml(m.text || "");
+              if (m.image) {
+                const img = document.createElement("img");
+                img.src = m.image;
+                div.appendChild(img);
+              }
             }
-          }
-          messages.appendChild(div);
-        });
+            messages.appendChild(div);
+          });
+          chatStates[mountId].messageSig = messageSig;
+          messages.scrollTop = messages.scrollHeight;
+        }
         const otherRole = role === "admin" ? "user" : "admin";
         const otherTyping = c.typing && c.typing[otherRole];
+        let typingSig = "none";
         if (otherTyping && Date.now() - otherTyping.at < 3000) {
           const label = otherRole === "admin" ? "Axo Services is typing" : (otherTyping.name || "User") + " is typing";
-          typing.innerHTML = `${escapeHtml(label)} <span class="bounce"><span></span><span></span><span></span></span>`;
-          typing.classList.remove("hidden");
+          typingSig = label;
+          if (chatStates[mountId].typingSig !== typingSig) {
+            typing.innerHTML = `${escapeHtml(label)} <span class="bounce"><span></span><span></span><span></span></span>`;
+            typing.classList.remove("hidden");
+          }
         } else {
-          typing.classList.add("hidden");
-          typing.innerHTML = "";
+          if (chatStates[mountId].typingSig !== typingSig) {
+            typing.classList.add("hidden");
+            typing.innerHTML = "";
+          }
         }
-        messages.scrollTop = messages.scrollHeight;
+        chatStates[mountId].typingSig = typingSig;
       };
       input.oninput = () => {
         const name = role === "admin" ? "Axo Services" : guestName;
         setTyping(caseId, role, name, input.value.trim().length > 0);
         clearTypingSoon(caseId, role, name);
+        input.style.height = "auto";
+        input.style.height = Math.min(input.scrollHeight, 150) + "px";
+      };
+      input.onkeydown = (e) => {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          form.requestSubmit();
+        }
       };
       attach.onclick = () => file.click();
       file.onchange = () => {
@@ -785,12 +821,13 @@
             id: uid("MSG"),
             type: role,
             from: role === "admin" ? "Axo Services" : guestName,
-            text: input.value.trim(),
+            text: input.value,
             image: reader.result,
             time: now()
           }));
           setTyping(caseId, role, role === "admin" ? "Axo Services" : guestName, false);
           input.value = "";
+          input.style.height = "auto";
           file.value = "";
           renderMessages();
         };
@@ -798,8 +835,8 @@
       };
       form.onsubmit = (e) => {
         e.preventDefault();
-        const text = input.value.trim();
-        if (!text) return;
+        const text = input.value;
+        if (!text.trim()) return;
         updateCase(caseId, c => c.messages.push({
           id: uid("MSG"),
           type: role,
@@ -809,10 +846,11 @@
         }));
         setTyping(caseId, role, role === "admin" ? "Axo Services" : guestName, false);
         input.value = "";
+        input.style.height = "auto";
         renderMessages();
       };
       renderMessages();
-      chatIntervals[mountId] = setInterval(renderMessages, 900);
+      chatIntervals[mountId] = setInterval(renderMessages, 1000);
     }
     function escapeHtml(text) {
       return text.replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" }[ch]));
