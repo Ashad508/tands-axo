@@ -579,8 +579,13 @@
             <div class="field"><label>Email address</label><input id="adminEmail" /></div>
             <div class="field"><label>Description</label><textarea id="adminDesc"></textarea></div>
             <div class="field"><label>Custom status</label><input id="customStatus" placeholder="Waiting, Reviewing, Resolved..." /></div>
+            <div class="field">
+              <label>Share custom message</label>
+              <textarea id="customNotice" placeholder="The chat is transferred to Senior Support Team..."></textarea>
+            </div>
             <div class="actions">
               <button id="saveStatusBtn">Change Status</button>
+              <button id="shareNoticeBtn" class="secondary">Share Message</button>
               <button id="copyUrlBtn" class="secondary">Copy Case URL</button>
               <button id="deleteCaseBtn" class="danger">Delete Case</button>
             </div>
@@ -626,7 +631,7 @@
     const storeKey = "axoCasesV3";
     const sessionKey = "axoAdminSession";
     const typingTimeouts = {};
-    const chatIntervals = {};
+    const chatRenderers = {};
     const chatStates = {};
     const params = new URLSearchParams(location.search);
     const queryCaseId = params.get("case") || "";
@@ -649,6 +654,10 @@
     }
     function saveCases(cases) {
       localStorage.setItem(storeKey, JSON.stringify(cases));
+      refreshChats();
+    }
+    function refreshChats() {
+      Object.values(chatRenderers).forEach(render => render());
     }
     function updateCase(caseId, updater) {
       const cases = getCases();
@@ -728,7 +737,6 @@
       mountChat("adminChatMount", c.caseId, "admin");
     }
     function mountChat(mountId, caseId, role) {
-      clearInterval(chatIntervals[mountId]);
       chatStates[mountId] = { messageSig: "", typingSig: "", headerSig: "" };
       const mount = $(mountId);
       const tpl = $("chatTemplate").content.cloneNode(true);
@@ -850,7 +858,7 @@
         renderMessages();
       };
       renderMessages();
-      chatIntervals[mountId] = setInterval(renderMessages, 1000);
+      chatRenderers[mountId] = renderMessages;
     }
     function escapeHtml(text) {
       return text.replace(/[&<>"']/g, ch => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#039;" }[ch]));
@@ -913,6 +921,13 @@
       });
       renderAdmin();
     };
+    $("shareNoticeBtn").onclick = () => {
+      const text = $("customNotice").value;
+      if (!selectedCaseId || !text.trim()) return;
+      addSystem(selectedCaseId, text);
+      $("customNotice").value = "";
+      refreshChats();
+    };
     $("deleteCaseBtn").onclick = () => {
       if (!selectedCaseId || !confirm("Delete this case?")) return;
       saveCases(getCases().filter(c => c.caseId !== selectedCaseId));
@@ -959,7 +974,7 @@
       window.onbeforeunload = () => addSystem(caseId, guestName + " Disconnected");
     };
     window.addEventListener("storage", () => {
-      // Chat panels poll their case data, so storage events should not rebuild the UI.
+      refreshChats();
     });
     route();
   </script>
